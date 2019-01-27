@@ -1,0 +1,59 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+Vagrant.configure("2") do |config|
+
+config.vm.box = "bento/centos-7.5"
+config.vm.synced_folder "./", "/var/www"
+
+config.vm.provider "virtualbox" do |vb|
+vb.memory = "512"
+end
+
+config.vm.define "tomcat1" do |tomcat1|
+  tomcat1.vm.hostname = "tomcat1"
+  tomcat1.vm.network "private_network", ip: "192.168.33.11"
+
+  tomcat1.vm.provision "shell", inline: <<-SHELL
+yum install tomcat tomcat-webapps tomcat-admin-webapps -y
+systemctl enable tomcat
+systemctl start tomcat
+mkdir /usr/share/tomcat/webapps/test
+echo "tomcat1" >> /usr/share/tomcat/webapps/test/index.html
+SHELL
+end
+
+config.vm.define "tomcat2" do |tomcat2|
+tomcat2.vm.hostname = "tomcat2"
+tomcat2.vm.network "private_network", ip: "192.168.33.12"
+
+tomcat2.vm.provision "shell", inline: <<-SHELL
+yum install tomcat tomcat-webapps tomcat-admin-webapps -y
+systemctl enable tomcat
+systemctl start tomcat
+mkdir /usr/share/tomcat/webapps/test
+echo "tomcat2" >> /usr/share/tomcat/webapps/test/index.html
+SHELL
+end
+
+
+config.vm.define "balancer" do |balancer|
+balancer.vm.hostname = "balancer"
+balancer.vm.network "private_network", ip: "192.168.33.10"
+balancer.vm.network "forwarded_port", guest: 80, host: 20080
+  
+balancer.vm.provision "shell", inline: <<-SHELL
+yum install httpd -y
+cp /var/www/mod_jk.so /etc/httpd/modules/
+cp /var/www/workers.properties /etc/httpd/conf
+cat /var/www/config >> /etc/httpd/conf/httpd.conf
+systemctl enable httpd
+systemctl start httpd
+#firewall-cmd --zone=public --add-port=80/tcp --permanent
+#firewall-cmd --reload
+#systemctl stop firewalld
+
+SHELL
+end
+
+
+end
