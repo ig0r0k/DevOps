@@ -5,16 +5,15 @@ systemctl enable tomcat
 systemctl start tomcat
 
 if [ -d /usr/share/tomcat/webapps/test ]; then
-echo "DIRECTORY TEST IS ALREADY EXISTS"
+  echo "DIRECTORY TEST IS ALREADY EXISTS"
 else
-echo "CREATE DIRECTORY TEST"
-mkdir /usr/share/tomcat/webapps/test
+  echo "CREATE DIRECTORY TEST"
+  mkdir /usr/share/tomcat/webapps/test
 fi
 
-if grep "tomcat1" /usr/share/tomcat/webapps/test/index.html;
-then
-echo "The string in index.html is already exists"
+if grep "tomcat1" /usr/share/tomcat/webapps/test/index.html; then
+  echo "The string in index.html is already exists"
 else
-echo "ADD STRING"
-echo "tomcat1" >> /usr/share/tomcat/webapps/test/index.html
+  echo "ADD STRING"
+  echo "tomcat1" >> /usr/share/tomcat/webapps/test/index.html
 fi
