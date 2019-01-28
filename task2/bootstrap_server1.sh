@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-#function isinstalled {
-  #if yum list installed "$@" >/dev/null 2>&1; then
-   # true
-  #else
-  #  false
-  #fi
-#}
 
 if grep "192.168.33.11 server2" /etc/hosts;
 then
@@ -14,12 +7,7 @@ else
 echo "192.168.33.11 server2" >> /etc/hosts
 fi
 
-#if isinstalled git;
-#then echo "GIT INSTALLED"
-#else
-#echo "START INSTALL GIT"
 yum install git -y
-#fi
 
 if [ -d /home/vagrant/DevOps ]; then
 echo "DIRECTORY DevOps IS ALREADY EXIST"
