@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 if grep "192.168.33.10 server1" /etc/hosts; then
-  echo "The string is already exists"
+	echo "The string is already exists"
 else
-  echo "192.168.33.10 server1" >> /etc/hosts
+	echo "192.168.33.10 server1" >> /etc/hosts
 fi
 
 if [ -f /home/vagrant/.ssh/id_rsa ]; then
