@@ -15,11 +15,11 @@ Vagrant.configure("2") do |config|
 	end
 
 (1..$mach_quant).each do |i|
-    config.vm.define "tomcat#{i}" do |tomcat|
-        tomcat.vm.network "private_network", ip: "192.168.1.#{24+i}"
-        tomcat.vm.hostname = "worker#{i}"
-	tomcat.vm.provision :shell, :path => "bootstrap_tomcat.sh" 
-    end
+	config.vm.define "tomcat#{i}" do |tomcat|
+		tomcat.vm.network "private_network", ip: "192.168.1.#{24+i}"
+        	tomcat.vm.hostname = "worker#{i}"
+		tomcat.vm.provision :shell, :path => "bootstrap_tomcat.sh" 
+    	end
 end  
   
 	config.vm.define "balancer" do |balancer|
