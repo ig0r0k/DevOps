@@ -25,8 +25,7 @@ else
 	#Add start configurations
 	echo "worker.list=lb" >> /etc/httpd/conf/workers.properties
 	echo "worker.lb.type=lb" >> /etc/httpd/conf/workers.properties
-	cat workerString >> /etc/httpd/conf/workers.properties
-	
+	cat workerString >> /etc/httpd/conf/workers.properties	
 	cat /var/www/end >> /etc/httpd/conf/workers.properties
 fi
 
