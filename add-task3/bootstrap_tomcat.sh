@@ -19,8 +19,6 @@ else
 	cat /etc/hostname >> /usr/share/tomcat/webapps/test/index.html
 fi
 
-
-
 #Generate options for workers
 if [ -f /home/vagrant/worker ]; then
 	echo "FILI EXISTS"
