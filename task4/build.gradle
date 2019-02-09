@@ -25,7 +25,6 @@ task incrementVersion {
 		println s
 		def file1 = new File('gradle.properties')
 		file1.write s
-
 	}
 	
 task replaceVersion (dependsOn: incrementVersion) {
