@@ -2,10 +2,6 @@ plugins {
 	id 'war'
 }
 
-war {
-	archiveName = 'testAPP.war'
-}
-
 repositories {
 	jcenter()
 	mavenCentral()
@@ -16,6 +12,9 @@ dependencies {
 	compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
 }
 	
+war {
+	archiveName = 'testAPP.war'
+}
 	
 task incrementVersion << {
 	def version=VERSION
@@ -27,7 +26,7 @@ task incrementVersion << {
 	def file1 = new File('gradle.properties')
 	file1.write s
 }
-	
+
 task replaceVersion << {
 	def file1 = new File ("./build/resources/main/greeting.txt")
 	String file2 = new File('gradle.properties').getText('UTF-8')
@@ -35,5 +34,5 @@ task replaceVersion << {
 	println s
 	file1.write s
 }
-
-build.dependsOn replaceVersion
+	
+war.dependsOn replaceVersion
