@@ -1,114 +1,165 @@
-node('master') {
+node ('master') {
+    
     stage('Clone repo') {
-        echo 'hello'
-		git clone --branch=task6 https://github.com/ig0r0k/DevOps.git
-        //git 'https://github.com/ig0r0k/Practice.git'
+        checkout([$class: 'GitSCM', branches: [[name: '*/task6']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: 'task6']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/ig0r0k/DevOps.git']]])
     }
     
     stage('Build war') {
         sh label: '', script: 'pwd'
         dir('/var/lib/jenkins/workspace/test/task4/') {
-            sh label: '', script: 'pwd'
-            sh label: '', script: 'ls -lah'
-			sh label: '', script: 'chmod +x gradlew'
-			sh label: '', script: './gradlew iV build'
-			
-			//curl ЦXPUT Цu admin:admin123 ЦT <artifact.war> http://<nexus_url>:8081/nexus/content/repositories/snapshots/task6/1.0.x/test.war
-
-}
+		sh label: '', script: 'chmod +x gradlew'
+	        sh label: '', script: './gradlew iV build'
+        }
     }
-   
-}
-
-
-scp /var/lib/jenkins/workspace/test/task4/gradle.properties vagrant@192.168.100.11:/home/vagrant/workspace
-
-
-#!/bin/bash прверка на курл с мастера
-check="$(curl 192.168.100.11:8080/test/)"
-echo "$check"
-a="${check#*=}"
-echo "$a"
-only_vers="${a%</p*}"
-echo "$only_vers"
-if [ $b == $x ]; then
-echo "all OK"
-else
-echo "stop build!"
-fi
-
-
-
-
-
-node('master') {
     
-    stage('Check repo') {
+    stage('Upload to nexus') {
         dir('/var/lib/jenkins/workspace/test/task4/') {
-    sh label: '', script: 'ls -lah'
-    vers = readFile 'gradle.properties'
-    x=vers.substring(8)
-    String s = "http://192.168.100.10:8081/nexus/content/repositories/snapshots/task6/"
-    String w = "/test.war"
-    path = s + x + w
-    //println path
-    sh label: '', script: "echo $path"
+            vers = readFile 'gradle.properties'
+            x=vers.substring(8)
+            String s = "http://192.168.100.10:8081/nexus/content/repositories/snapshots/task6/"
+            String w = "/test.war"
+            path = s + x + w
+            sh label: '', script: "echo $path"
         }
         
         dir('/var/lib/jenkins/workspace/test/task4/build/libs/') {
-            sh label: '', script: "curl -XPUT -u admin:admin123 -T testAPP.war $path"
-            
+            withCredentials([usernameColonPassword(credentialsId: 'df3aad20-f9ea-4eb8-8dea-4a7b12fe33fe', variable: 'nexus')]) {
+                sh label: '', script: "curl -XPUT -u admin:admin123 -T testAPP.war $path"
+            }
         }
     }
-        
-    
-		
-	
-		
-}
-
-
-
-
-withCredentials([usernamePassword(credentialsId: 'ca22753d-62ce-4bfa-8d0a-c1b04a243081', passwordVariable: 'everyone', usernameVariable: 'hello')]) {
- sh label: '', script: """git tag -a test7_tag -m 'test try'
-    git push https://${hello}:${everyone}@github.com/ig0r0k/DevOps.git --tags"""
-}
-
-
-
-
-stage('GIT PUSH') {
-     sh label: '', script: '''
-git config user.name "ig0r0k"
-git config user.email ig0r0k@users.noreply.github.com
-git config --global push.default simple
-git status
-git pull origin task4
-git status
-git add task4/gradle.properties
-git status
-git commit -am "push from Jenkins"
-git status
-'''
- withCredentials([usernamePassword(credentialsId: 'ca22753d-62ce-4bfa-8d0a-c1b04a243081', passwordVariable: 'update', usernameVariable: 'check')]) {
- sh("git tag -a $x -am 'Jenkins tag'")
- sh("git push https://${check}:${update}@github.com/ig0r0k/DevOps.git HEAD:task6")
     
 }
-}
 
-
-
-stage('Check version') {
+node('tomcat1') {
+   
+   stage('Download war') {
+	sh label: '', script: """if [ -f test.war ]; then
+        echo "test.war already exists, remove it and download latest version"
+        rm test.war
+        wget $path
+    else
+        wget $path
+    fi"""
+   }
+   
+   stage('Disable LB tomcat') {
+         httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=1'
+     }
+     
+     stage('Move test.war to webaaps') {
+        sh label: '', script: 'chmod +x test.war'
+        withCredentials([usernameColonPassword(credentialsId: 'bb18464d-816a-4693-bfca-bc7540d77d0f', variable: '')]) {
+        sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
+        sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
+		echo "EXISTS"
+		rm -R /usr/share/tomcat/webapps/test*
+		cp test.war /usr/share/tomcat/webapps/
+		else
+		echo "we don not see that"
+		cp test.war /usr/share/tomcat/webapps/
+		fi'''
+        }
+    }
+     
+     stage('Enable LB tomcat') {
+        httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=0'
+     }
+     
+     stage('Check version') {
+        sleep 10
         sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"
         site1 = readFile 'site.txt'
-        println site1
-        check_site1=site1.substring(42,47)
+        check_site1=site1.substring(42,48)
+        println check_site1
         if (x == check_site1) {
             println "All OK"
         }
         else {
-            println "Something wrong"
+            println "Something wrong, abort build"
+            currentBuild.result = 'ABORTED'
+            error('Something wrong, abort build')
         }
     }
+}
+
+node('tomcat2') {
+    
+    stage('Download war2') {
+        sh label: '', script: """if [ -f test.war ]; then
+            echo "test.war already exists, remove it and download latest version"
+            rm test.war
+            wget $path
+        else
+            wget $path
+        fi"""
+   }
+   
+    stage('Disable LB tomcat2') {
+        httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=1'
+    }
+     
+    stage('Move test.war to webaaps2') {
+        sh label: '', script: 'chmod +x test.war'
+        withCredentials([usernameColonPassword(credentialsId: 'bb18464d-816a-4693-bfca-bc7540d77d0f', variable: '')]) {
+        sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
+        sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
+		    echo "EXISTS"
+		    rm -R /usr/share/tomcat/webapps/test*
+		    cp test.war /usr/share/tomcat/webapps/
+		else
+		    echo "we don not see that"
+		    cp test.war /usr/share/tomcat/webapps/
+		fi'''
+        }
+    }
+     
+    stage('Enable LB tomcat2') {
+        httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=0'
+    }
+     
+    stage('Check version2') {
+        sleep 10
+        sh label: '', script: "curl 192.168.100.12:8080/test/ > site.txt"
+        site2 = readFile 'site.txt'
+        println site2
+        println x
+        check_site2=site2.substring(42,48)
+        println check_site2
+        if (x == check_site2) {
+            println "All OK"
+        }
+        else {
+            println "Something wrong, abort build"
+            currentBuild.result = 'ABORTED'
+            error('Something wrong, abort build')
+        }
+    }
+}
+
+node('master') {
+    stage('Git push') {
+        sh label: '', script: '''
+        git config user.name "ig0r0k"
+        git config user.email ig0r0k@users.noreply.github.com
+        git config --global push.default simple
+        git status
+        git branch
+        git commit -am "push from Jenkins"
+        git status
+        '''
+        withCredentials([usernamePassword(credentialsId: 'ee18572c-20ab-4249-95cf-89ea8a395999', passwordVariable: 'update', usernameVariable: 'push')]) {
+       //   sh("git tag -a $x -am 'Jenkins tag'")
+            sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:task6")
+            sh("git checkout Module1")
+            sh("git add task4/gradle.properties")
+            sh("ls -lah")
+            sh label: '', script: "echo $vers > task4/gradle.properties"
+            sh("cat task4/gradle.properties")
+            sh('git commit -am "FIX conflicts"')
+            sh("cat task4/gradle.properties")
+            sh("git merge task6")
+            sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:Module1 --tags")
+        }
+    }
+}
