@@ -5,21 +5,21 @@
   <keepDependencies>false</keepDependencies>
   <properties/>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.63">
-    <script>node(&apos;master&apos;) {
+    <script>node (&apos;master&apos;) {
     
     stage(&apos;Clone repo&apos;) {
-      checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/task6&apos;]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: &apos;LocalBranch&apos;, localBranch: &apos;task6&apos;]], submoduleCfg: [], userRemoteConfigs: [[url: &apos;https://github.com/ig0r0k/DevOps.git&apos;]]])
-      }
+        checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/task6&apos;]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: &apos;LocalBranch&apos;, localBranch: &apos;task6&apos;]], submoduleCfg: [], userRemoteConfigs: [[url: &apos;https://github.com/ig0r0k/DevOps.git&apos;]]])
+    }
     
     stage(&apos;Build war&apos;) {
         sh label: &apos;&apos;, script: &apos;pwd&apos;
         dir(&apos;/var/lib/jenkins/workspace/test/task4/&apos;) {
 	        sh label: &apos;&apos;, script: &apos;chmod +x gradlew&apos;
 	        sh label: &apos;&apos;, script: &apos;./gradlew iV build&apos;
-		}
+        }
     }
-		
-	stage(&apos;Upload to nexus&apos;) {
+    
+    stage(&apos;Upload to nexus&apos;) {
         dir(&apos;/var/lib/jenkins/workspace/test/task4/&apos;) {
             vers = readFile &apos;gradle.properties&apos;
             x=vers.substring(8)
@@ -30,11 +30,12 @@
         }
         
         dir(&apos;/var/lib/jenkins/workspace/test/task4/build/libs/&apos;) {
-            withCredentials([usernameColonPassword(credentialsId: &apos;008aa3d5-f931-4fe4-8414-7983ff5fb84e&apos;, variable: &apos;nexus&apos;)]) {
+            withCredentials([usernameColonPassword(credentialsId: &apos;df3aad20-f9ea-4eb8-8dea-4a7b12fe33fe&apos;, variable: &apos;nexus&apos;)]) {
                 sh label: &apos;&apos;, script: &quot;curl -XPUT -u admin:admin123 -T testAPP.war $path&quot;
             }
         }
     }
+    
 }
 
 node(&apos;tomcat1&apos;) {
@@ -49,36 +50,33 @@ node(&apos;tomcat1&apos;) {
     fi&quot;&quot;&quot;
    }
    
-   stage(&apos;Disable LB tomcat1&apos;) {
+   stage(&apos;Disable LB tomcat&apos;) {
          httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker1&amp;vwa=1&apos;
      }
      
      stage(&apos;Move test.war to webaaps&apos;) {
         sh label: &apos;&apos;, script: &apos;chmod +x test.war&apos;
-        withCredentials([usernameColonPassword(credentialsId: &apos;6c3694ad-59a0-49ac-9f22-176a65f2a092&apos;, variable: &apos;&apos;)]) {
+        withCredentials([usernameColonPassword(credentialsId: &apos;bb18464d-816a-4693-bfca-bc7540d77d0f&apos;, variable: &apos;&apos;)]) {
         sh label: &apos;&apos;, script: &apos;sudo chmod 777 -R /usr/share/tomcat/webapps/&apos;
-        sh label: &apos;&apos;, script: &apos;&apos;&apos;if [ -d /usr/share/tomcat/webapps/test ]; then
+        sh label: &apos;&apos;, script: &apos;&apos;&apos;if [ -d /usr/share/tomcat/webapps/test/ ]; then
+		echo &quot;EXISTS&quot;
 		rm -R /usr/share/tomcat/webapps/test*
-		sudo cp test.war /usr/share/tomcat/webapps/
-		chmod +x test.war
+		cp test.war /usr/share/tomcat/webapps/
 		else
 		echo &quot;we don not see that&quot;
-		sudo cp test.war /usr/share/tomcat/webapps/
-		chmod +x test.war
+		cp test.war /usr/share/tomcat/webapps/
 		fi&apos;&apos;&apos;
         }
-     }
+    }
      
-     stage(&apos;Enable LB tomcat1&apos;) {
-         httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker1&amp;vwa=0&apos;
+     stage(&apos;Enable LB tomcat&apos;) {
+        httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker1&amp;vwa=0&apos;
      }
      
      stage(&apos;Check version&apos;) {
         sleep 10
         sh label: &apos;&apos;, script: &quot;curl 192.168.100.11:8080/test/ &gt; site.txt&quot;
         site1 = readFile &apos;site.txt&apos;
-        println site1
-        println x
         check_site1=site1.substring(42,48)
         println check_site1
         if (x == check_site1) {
@@ -93,45 +91,43 @@ node(&apos;tomcat1&apos;) {
 }
 
 node(&apos;tomcat2&apos;) {
-   
-   stage(&apos;Download war&apos;) {
+    stage(&apos;Download war2&apos;) {
         sh label: &apos;&apos;, script: &quot;&quot;&quot;if [ -f test.war ]; then
-        echo &quot;test.war already exists, remove it and download latest version&quot;
-        rm test.war
-        wget $path
-    else
-        wget $path
-    fi&quot;&quot;&quot;
+            echo &quot;test.war already exists, remove it and download latest version&quot;
+            rm test.war
+            wget $path
+        else
+            wget $path
+        fi&quot;&quot;&quot;
    }
    
-   stage(&apos;Disable LB tomcat2&apos;) {
-         httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker2&amp;vwa=1&apos;
-     }
+    stage(&apos;Disable LB tomcat2&apos;) {
+        httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker2&amp;vwa=1&apos;
+    }
      
-     stage(&apos;Move test.war to webaaps&apos;) {
+    stage(&apos;Move test.war to webaaps2&apos;) {
         sh label: &apos;&apos;, script: &apos;chmod +x test.war&apos;
-        withCredentials([usernameColonPassword(credentialsId: &apos;6c3694ad-59a0-49ac-9f22-176a65f2a092&apos;, variable: &apos;&apos;)]) {
+        withCredentials([usernameColonPassword(credentialsId: &apos;bb18464d-816a-4693-bfca-bc7540d77d0f&apos;, variable: &apos;&apos;)]) {
         sh label: &apos;&apos;, script: &apos;sudo chmod 777 -R /usr/share/tomcat/webapps/&apos;
-        sh label: &apos;&apos;, script: &apos;&apos;&apos;if [ -d /usr/share/tomcat/webapps/test ]; then
-		rm -R /usr/share/tomcat/webapps/test*
-		sudo cp test.war /usr/share/tomcat/webapps/
-		chmod +x test.war
+        sh label: &apos;&apos;, script: &apos;&apos;&apos;if [ -d /usr/share/tomcat/webapps/test/ ]; then
+		    echo &quot;EXISTS&quot;
+		    rm -R /usr/share/tomcat/webapps/test*
+		    cp test.war /usr/share/tomcat/webapps/
 		else
-		echo &quot;we don not see that&quot;
-		sudo cp test.war /usr/share/tomcat/webapps/
-		chmod +x test.war
+		    echo &quot;we don not see that&quot;
+		    cp test.war /usr/share/tomcat/webapps/
 		fi&apos;&apos;&apos;
         }
-     }
+    }
      
-     stage(&apos;Enable LB tomcat2&apos;) {
-         httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker2&amp;vwa=0&apos;
-     }
+    stage(&apos;Enable LB tomcat2&apos;) {
+        httpRequest responseHandle: &apos;NONE&apos;, url: &apos;http://192.168.100.10/jkmanager?cmd=update&amp;from=list&amp;w=lb&amp;sw=worker2&amp;vwa=0&apos;
+    }
      
-     stage(&apos;Check version&apos;) {
+    stage(&apos;Check version2&apos;) {
         sleep 10
         sh label: &apos;&apos;, script: &quot;curl 192.168.100.12:8080/test/ &gt; site.txt&quot;
-        site1 = readFile &apos;site.txt&apos;
+        site2 = readFile &apos;site.txt&apos;
         println site2
         println x
         check_site2=site2.substring(42,48)
@@ -158,13 +154,18 @@ node(&apos;master&apos;) {
         git commit -am &quot;push from Jenkins&quot;
         git status
         &apos;&apos;&apos;
-        withCredentials([usernamePassword(credentialsId: &apos;ca22753d-62ce-4bfa-8d0a-c1b04a243081&apos;, passwordVariable: &apos;update&apos;, usernameVariable: &apos;check&apos;)]) {
-            sh(&quot;git tag -a $x -am &apos;Jenkins tag&apos;&quot;)
-            sh(&quot;git push https://${check}:${update}@github.com/ig0r0k/DevOps.git HEAD:task6&quot;)
+        withCredentials([usernamePassword(credentialsId: &apos;ee18572c-20ab-4249-95cf-89ea8a395999&apos;, passwordVariable: &apos;update&apos;, usernameVariable: &apos;push&apos;)]) {
+       //   sh(&quot;git tag -a $x -am &apos;Jenkins tag&apos;&quot;)
+            sh(&quot;git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:task6&quot;)
             sh(&quot;git checkout Module1&quot;)
-            sh(&apos;git commit -am &quot;FIX IT?&quot;&apos;)
+            sh(&quot;git add task4/gradle.properties&quot;)
+            sh(&quot;ls -lah&quot;)
+            sh label: &apos;&apos;, script: &quot;echo $vers &gt; task4/gradle.properties&quot;
+            sh(&quot;cat task4/gradle.properties&quot;)
+            sh(&apos;git commit -am &quot;FIX conflicts&quot;&apos;)
+            sh(&quot;cat task4/gradle.properties&quot;)
             sh(&quot;git merge task6&quot;)
-            sh(&quot;git push https://${check}:${update}@github.com/ig0r0k/DevOps.git HEAD:Module1 --tags&quot;)
+            sh(&quot;git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:Module1 --tags&quot;)
         }
     }
 }</script>
