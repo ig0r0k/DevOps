@@ -1,0 +1,169 @@
+node ('master') {
+    
+    stage('Clone repo') {
+        checkout([$class: 'GitSCM', branches: [[name: '*/task6']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: 'task6']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/ig0r0k/DevOps.git']]])
+    }
+    
+    stage('Build war') {
+        dir('/var/lib/jenkins/workspace/test/task4/') {
+	        sh label: '', script: 'chmod +x gradlew'
+	        sh label: '', script: './gradlew iV build'
+        }
+    }
+    
+    stage('Upload to nexus') {
+        dir('task4/') {
+            vers = readFile 'gradle.properties'
+            x=vers.substring(8)
+            tag = "v" + x
+            String s = "http://192.168.100.10:8081/nexus/content/repositories/snapshots/task6/"
+            String w = "/test.war"
+            path = s + x + w
+            sh label: '', script: "echo $path"
+        }
+        
+        dir('task4/build/libs/') {
+            withCredentials([usernamePassword(credentialsId: 'df3aad20-f9ea-4eb8-8dea-4a7b12fe33fe', passwordVariable: 'nexus', usernameVariable: 'upload')]) {
+                sh label: '', script: "curl -XPUT -u $upload:$nexus -T testAPP.war $path"
+            }
+        }
+    }
+    
+}
+
+node('tomcat1') {
+   
+   stage('Download war') {
+	sh label: '', script: """if [ -f test.war ]; then
+        echo "test.war already exists, remove it and download latest version"
+        rm test.war
+        wget $path
+    else
+        wget $path
+    fi"""
+	}
+   
+	stage('Disable LB tomcat') {
+        httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=1'
+    }
+     
+    stage('Move test.war to webaaps') {
+		sh label: '', script: 'chmod +x test.war'
+        sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
+        sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
+			echo "EXISTS"
+			rm -R /usr/share/tomcat/webapps/test*
+			cp test.war /usr/share/tomcat/webapps/
+		else
+			echo "we don not see that"
+			cp test.war /usr/share/tomcat/webapps/
+		fi'''
+    }
+     
+    stage('Enable LB tomcat') {
+		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=0'
+    }
+     
+    stage('Check version') {
+        sleep 10
+        sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"
+        sh label: '', script: """if grep $vers site.txt; then
+            echo $x > check.txt
+        else
+            echo "1" > check.txt
+        fi"""
+        
+		site1 = readFile 'check.txt'
+        check_site1=site1.substring(0, site1.indexOf('\n'))
+        println check_site1
+        
+		if (x == check_site1) {
+            println "All OK"
+        }
+		
+        else {
+            println "Something wrong, abort build"
+            currentBuild.result = 'ABORTED'
+            error('Something wrong, abort build')
+        }
+    }
+}
+
+node('tomcat2') {
+   
+   stage('Download war2') {
+	sh label: '', script: """if [ -f test.war ]; then
+        echo "test.war already exists, remove it and download latest version"
+        rm test.war
+        wget $path
+    else
+        wget $path
+    fi"""
+	}
+   
+	stage('Disable LB tomcat2') {
+        httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=1'
+    }
+     
+    stage('Move test.war to webaaps2') {
+		sh label: '', script: 'chmod +x test.war'
+        sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
+        sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
+			echo "EXISTS"
+			rm -R /usr/share/tomcat/webapps/test*
+			cp test.war /usr/share/tomcat/webapps/
+		else
+			echo "we don not see that"
+			cp test.war /usr/share/tomcat/webapps/
+		fi'''
+    }
+     
+    stage('Enable LB tomcat2') {
+		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=0'
+    }
+     
+    stage('Check version2') {
+        sleep 10
+        sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"
+        sh label: '', script: """if grep $vers site.txt; then
+            echo $x > check.txt
+        else
+            echo "1" > check.txt
+        fi"""
+        
+		site2 = readFile 'check.txt'
+        check_site2=site2.substring(0, site2.indexOf('\n'))
+        println check_site2
+        
+		if (x == check_site2) {
+            println "All OK"
+        }
+		
+        else {
+            println "Something wrong, abort build"
+            currentBuild.result = 'ABORTED'
+            error('Something wrong, abort build')
+        }
+    }
+}
+
+node('master') {
+    stage('Git push') {
+        sh label: '', script: '''
+        git config user.name "ig0r0k"
+        git config user.email ig0r0k@users.noreply.github.com
+        git config --global push.default simple
+        git status
+        git branch
+        git commit -am "push from Jenkins"
+        git status
+        '''
+        withCredentials([usernamePassword(credentialsId: 'ee18572c-20ab-4249-95cf-89ea8a395999', passwordVariable: 'update', usernameVariable: 'push')]) {
+            sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:task6")
+            sh("git checkout Module1")
+            sh("git tag -a $tag -am 'Jenkins tag'")
+            sh("echo $vers > task4/gradle.properties || git pull https://github.com/ig0r0k/DevOps.git task6")
+            sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:Module1 --tags")
+        }
+    }
+}
