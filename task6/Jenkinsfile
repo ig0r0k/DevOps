@@ -48,16 +48,16 @@ node('tomcat1') {
     }
      
     stage('Move test.war to webaaps') {
-		sh label: '', script: 'chmod +x test.war'
+	sh label: '', script: 'chmod +x test.war'
         sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
         sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
-			echo "EXISTS"
-			rm -R /usr/share/tomcat/webapps/test*
-			cp test.war /usr/share/tomcat/webapps/
-		else
-			echo "we don not see that"
-			cp test.war /usr/share/tomcat/webapps/
-		fi'''
+		echo "EXISTS"
+		rm -R /usr/share/tomcat/webapps/test*
+		cp test.war /usr/share/tomcat/webapps/
+	else
+		echo "we don not see that"
+		cp test.war /usr/share/tomcat/webapps/
+	fi'''
     }
      
     stage('Enable LB tomcat') {
@@ -73,11 +73,11 @@ node('tomcat1') {
             echo "1" > check.txt
         fi"""
         
-		site1 = readFile 'check.txt'
+	site1 = readFile 'check.txt'
         check_site1=site1.substring(0, site1.indexOf('\n'))
         println check_site1
         
-		if (x == check_site1) {
+	if (x == check_site1) {
             println "All OK"
         }
 		
@@ -102,13 +102,13 @@ node('tomcat2') {
 	}
    
 	stage('Disable LB tomcat2') {
-        httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=1'
-    }
+        	httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=1'
+	}
      
-    stage('Move test.war to webaaps2') {
+	stage('Move test.war to webaaps2') {
 		sh label: '', script: 'chmod +x test.war'
-        sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
-        sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
+        	sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
+        	sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
 			echo "EXISTS"
 			rm -R /usr/share/tomcat/webapps/test*
 			cp test.war /usr/share/tomcat/webapps/
@@ -116,26 +116,26 @@ node('tomcat2') {
 			echo "we don not see that"
 			cp test.war /usr/share/tomcat/webapps/
 		fi'''
-    }
+	}
      
-    stage('Enable LB tomcat2') {
+	stage('Enable LB tomcat2') {
 		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=0'
-    }
+	}
      
-    stage('Check version2') {
-        sleep 10
-        sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"
-        sh label: '', script: """if grep $vers site.txt; then
-            echo $x > check.txt
-        else
-            echo "1" > check.txt
-        fi"""
+	stage('Check version2') {
+		sleep 10
+        	sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"
+        	sh label: '', script: """if grep $vers site.txt; then
+            		echo $x > check.txt
+        	else
+            		echo "1" > check.txt
+        	fi"""
         
-		site2 = readFile 'check.txt'
+	site2 = readFile 'check.txt'
         check_site2=site2.substring(0, site2.indexOf('\n'))
         println check_site2
         
-		if (x == check_site2) {
+	if (x == check_site2) {
             println "All OK"
         }
 		
