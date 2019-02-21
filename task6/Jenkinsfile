@@ -60,10 +60,6 @@ node('tomcat1') {
 		fi'''
 	}
      
-	stage('Enable LB tomcat') {
-		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=0'
-	}
-     
 	stage('Check version') {
         	sleep 10
         	sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"        
@@ -82,6 +78,10 @@ node('tomcat1') {
             		currentBuild.result = 'ABORTED'
            		error('Something wrong, abort build')
         	}
+	}
+	
+	stage('Enable LB tomcat') {
+		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=0'
 	}
 }
 
@@ -114,10 +114,6 @@ node('tomcat2') {
 		fi'''
 	}
      
-	stage('Enable LB tomcat2') {
-		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=0'
-	}
-     
 	stage('Check version2') {
         	sleep 10
         	sh label: '', script: "curl 192.168.100.12:8080/test/ > site.txt"
@@ -136,6 +132,10 @@ node('tomcat2') {
             		currentBuild.result = 'ABORTED'
            		error('Something wrong, abort build')
         	}
+	}
+	
+	stage('Enable LB tomcat2') {
+		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=0'
 	}
 }
 
