@@ -6,7 +6,7 @@ RUN apt-get update \
     && mkdir -p /var/lock/apache2 /var/run/apache2 /var/log/supervisor
 COPY filebeat.yml /etc/filebeat/
 USER root
-RUN chmod g-ow /etc/filebeat/filebeat.yml
+RUN chmod 700 /etc/filebeat/filebeat.yml
 RUN filebeat modules enable apache2
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
