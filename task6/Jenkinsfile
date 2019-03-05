@@ -36,7 +36,7 @@ node ('master') {
     }
     
     stage('Upload to docker registry') {
-        sh label: '', script: "docker image tag task7:$x 10.186.106.155:5000/task7"
+        sh label: '', script: "docker image tag task7:$x 10.186.106.155:5000/task7:$x"
         sh label: '', script: "docker push 10.186.106.155:5000/task7"
     }
     
