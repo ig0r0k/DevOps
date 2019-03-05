@@ -1,161 +1,103 @@
 node ('master') {
     
-	stage('Clone repo') {
-        	checkout([$class: 'GitSCM', branches: [[name: '*/task6']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: 'task6']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/ig0r0k/DevOps.git']]])
-	}
+    stage('Clone repo') {
+        checkout([$class: 'GitSCM', branches: [[name: '*/add-task7']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: 'task6']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/ig0r0k/DevOps.git']]])
+    }
     
-	stage('Build war') {
-		dir('task6/') {
-			sh label: '', script: 'ls -lah'
-	        	sh label: '', script: 'chmod +x gradlew'
-	        	sh label: '', script: './gradlew iV build'
-		}
-	}
+    stage('Build war') {
+        dir('task6/') {
+	        sh label: '', script: 'ls -lah'
+	        sh label: '', script: 'chmod +x gradlew'
+	        sh label: '', script: './gradlew iV build'
+        }
+    }
     
-	stage('Upload to nexus') {
-		dir('task6/') {
-			vers = readFile 'gradle.properties'
-			x=vers.substring(8)
-			tag = "v" + x
-			String s = "http://192.168.100.10:8081/nexus/content/repositories/snapshots/task6/"
-			String w = "/test.war"
-			path = s + x + w
-			sh label: '', script: "echo $path"
-        	}
+    stage('Upload to nexus') {
+       dir('task6/') {
+            vers = readFile 'gradle.properties'
+            x=vers.substring(8)
+            tag = "v" + x
+            String s = "http://192.168.100.10:8081/nexus/content/repositories/snapshots/task6/"
+            String w = "/test.war"
+            path = s + x + w
+            sh label: '', script: "echo $path"
+        }
         
-		dir('task6/build/libs/') {
-			withCredentials([usernamePassword(credentialsId: 'df3aad20-f9ea-4eb8-8dea-4a7b12fe33fe', passwordVariable: 'nexus', usernameVariable: 'upload')]) {
-				sh label: '', script: "curl -XPUT -u $upload:$nexus -T testAPP.war $path"
-			}
-		}
-	}    
-}
-
-node('tomcat1') {
-   
-	stage('Download war') {
-		sh label: '', script: """if [ -f test.war ]; then
-			echo "test.war already exists, remove it and download latest version"
-			rm test.war
-			wget $path
-		else
-			wget $path
-		fi"""
-	}
-   
-	stage('Disable LB tomcat') {
-        	httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=1'
-	}
-     
-	stage('Move test.war to webaaps') {
-		sh label: '', script: 'chmod +x test.war'
-        	sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
-        	sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
-			echo "EXISTS"
-			rm -R /usr/share/tomcat/webapps/test*
-			cp test.war /usr/share/tomcat/webapps/
-		else
-			echo "we don not see that"
-			cp test.war /usr/share/tomcat/webapps/
-		fi'''
-	}
-     
-	stage('Check version') {
-        	sleep 10
-        	sh label: '', script: "curl 192.168.100.11:8080/test/ > site.txt"        
-		
-		site1 = readFile 'site.txt'
-		indexOfsum1 = site1.indexOf('=')
-        	check_site1=site1.substring(indexOfsum1+1, site1.indexOf('</p'))
-        	println check_site1
+        dir('task6/build/libs/') {
+            withCredentials([usernamePassword(credentialsId: 'df3aad20-f9ea-4eb8-8dea-4a7b12fe33fe', passwordVariable: 'nexus', usernameVariable: 'upload')]) {
+                sh label: '', script: "curl -XPUT -u $upload:$nexus -T testAPP.war $path"
+            }
+        }
+    }
+    
+    stage('Build image') {
+        sh label: '', script: "ls -lah"
+        sh label: '', script: "docker build -t task7:$x --build-arg WAR_VERSION=$x ."
+    }
+    
+    stage('Upload to docker registry') {
+        sh label: '', script: "docker image tag task7:$x 10.186.106.155:5000/task7"
+        sh label: '', script: "docker push 10.186.106.155:5000/task7"
+    }
+    
+    stage('Check swarm service') {
+        sh label: '', script: "docker service ls > check_service.txt"
+        sh label: '', script: '''if grep test check_service.txt; then
+            echo "OK" > check_service.txt
+        else
+            echo "NO" > check_service.txt
+        fi'''
+        sh label: '', script: "cat check_service.txt"
         
-		if (x == check_site1) {
-            		println "All OK"
-        	}
-		
-		else {
-            		println "Something wrong, abort build"
-            		currentBuild.result = 'ABORTED'
-           		error('Something wrong, abort build')
-        	}
-	}
-	
-	stage('Enable LB tomcat') {
-		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker1&vwa=0'
-	}
-}
-
-node('tomcat2') {
-   
-	stage('Download war2') {
-		sh label: '', script: """if [ -f test.war ]; then
-			echo "test.war already exists, remove it and download latest version"
-			rm test.war
-			wget $path
-		else
-			wget $path
-		fi"""
-	}
-   
-	stage('Disable LB tomcat2') {
-        	httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=1'
-	}
-     
-	stage('Move test.war to webaaps2') {
-		sh label: '', script: 'chmod +x test.war'
-        	sh label: '', script: 'sudo chmod 777 -R /usr/share/tomcat/webapps/'
-        	sh label: '', script: '''if [ -d /usr/share/tomcat/webapps/test/ ]; then
-			echo "EXISTS"
-			rm -R /usr/share/tomcat/webapps/test*
-			cp test.war /usr/share/tomcat/webapps/
-		else
-			echo "we don not see that"
-			cp test.war /usr/share/tomcat/webapps/
-		fi'''
-	}
-     
-	stage('Check version2') {
-        	sleep 10
-        	sh label: '', script: "curl 192.168.100.12:8080/test/ > site.txt"
+        check_service = readFile 'check_service.txt'
+	    
+        if (check_service.substring(0,2) == "NO") {
+            echo "CREATED SERVICE"
+            sh label: '', script: "docker service create -p 48080:8080 --replicas=2 --name test 10.186.106.155:5000/task7"
+        }
+	    
+        else {
+            echo "UPDATE SERVICE"
+            sh label: '', script: "docker service update --image task7:$x test"
+        }
+    }
+    
+    stage('Check version') {
+        sleep 15
+        sh label: '', script: "curl 10.186.106:48080/test/ > site.txt"
         
-		site2 = readFile 'site.txt'
-		indexOfsum2 = site2.indexOf('=')
-        	check_site2=site2.substring(indexOfsum2+1, site2.indexOf('</p'))
-        	println check_site2
-
-		if (x == check_site2) {
-            		println "All OK"
-        	}
+	site = readFile 'site.txt'
+	indexOfsum = site.indexOf('=')
+        check_site=site.substring(indexOfsum+1, site.indexOf('</p'))
+        println check_site
+        
+	if (x == check_site) {
+            println "All OK"
+        }
 		
-        	else {
-            		println "Something wrong, abort build"
-            		currentBuild.result = 'ABORTED'
-           		error('Something wrong, abort build')
-        	}
-	}
-	
-	stage('Enable LB tomcat2') {
-		httpRequest responseHandle: 'NONE', url: 'http://192.168.100.10/jkmanager?cmd=update&from=list&w=lb&sw=worker2&vwa=0'
-	}
-}
+        else {
+            println "Something wrong, abort build"
+            currentBuild.result = 'ABORTED'
+            error('Something wrong, abort build')
+        }
+    }
 
-node('master') {
-	stage('Git push') {
-        	sh label: '', script: '''
-        	git config user.name "ig0r0k"
-        	git config user.email ig0r0k@users.noreply.github.com
-        	git config --global push.default simple
-        	git status
-        	git branch
-        	git commit -am "push from Jenkins"
-        	git status'''
-		
-		withCredentials([usernamePassword(credentialsId: 'ee18572c-20ab-4249-95cf-89ea8a395999', passwordVariable: 'update', usernameVariable: 'push')]) {
-			sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:task6")
-			sh("git checkout Module1")
-			sh("git tag -a $tag -am 'Jenkins tag'")
-			sh("echo $vers > task6/gradle.properties || git pull https://github.com/ig0r0k/DevOps.git task6")
-			sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:Module1 --tags")
-		}
-	}
+    stage('Git push') {
+        sh label: '', script: '''
+        git config user.name "ig0r0k"
+        git config user.email ig0r0k@users.noreply.github.com
+        git config --global push.default simple
+        git status
+        git branch
+        git commit -am "push from Jenkins"
+        git status
+        '''
+        withCredentials([usernamePassword(credentialsId: 'ee18572c-20ab-4249-95cf-89ea8a395999', passwordVariable: 'update', usernameVariable: 'push')]) {
+            sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:add-task7")
+            sh("git checkout Module1")
+            sh("git tag -a $tag -am 'add-task7 tag'")
+            sh("echo $vers > task6/gradle.properties || git pull https://github.com/ig0r0k/DevOps.git add-task7")
+            sh("git push https://${push}:${update}@github.com/ig0r0k/DevOps.git HEAD:Module1 --tags")
+        }
+    }
 }
