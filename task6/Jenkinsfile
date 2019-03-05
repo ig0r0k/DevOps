@@ -64,7 +64,7 @@ node ('master') {
     
     stage('Check version') {
         sleep 15
-        sh label: '', script: "curl 10.186.106:48080/test/ > site.txt"
+        sh label: '', script: "curl 10.186.106.155:48080/test/ > site.txt"
         
 	site = readFile 'site.txt'
 	indexOfsum = site.indexOf('=')
