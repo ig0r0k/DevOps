@@ -53,7 +53,7 @@ node ('master') {
 	    
         if (check_service.substring(0,2) == "NO") {
             echo "CREATED SERVICE"
-            sh label: '', script: "docker service create -p 48080:8080 --replicas=2 --name test 10.186.106.155:5000/task7"
+            sh label: '', script: "docker service create -p 48080:8080 --replicas=2 --name test 10.186.106.155:5000/task7:$x"
         }
 	    
         else {
