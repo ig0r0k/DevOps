@@ -1,0 +1,4 @@
+{
+        "insecure-registries": ["10.186.106.155:5000"],
+        "registry-mirrors": ["http://10.186.106.155:5000"]
+}
