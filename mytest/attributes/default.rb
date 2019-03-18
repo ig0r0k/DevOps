@@ -1,0 +1,5 @@
+default['mytest']['image'] = 'registry'
+default['mytest']['tag'] = '2'
+default['mytest']['repo'] = 'registry'
+default['mytest']['port'] = '5000:5000'
+default['mytest']['file'] = '/etc/docker/daemon.json'

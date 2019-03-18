@@ -1,0 +1,9 @@
+DEPENDENCIES
+  mytest
+    path: .
+    metadata: true
+
+GRAPH
+  docker (4.9.2)
+  mytest (0.3.2)
+    docker (~> 4.9.2)
