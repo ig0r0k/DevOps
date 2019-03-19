@@ -4,10 +4,9 @@ maintainer_email 'you@example.com'
 license 'All Rights Reserved'
 description 'Installs/Configures mytest'
 long_description 'Installs/Configures mytest'
-version '0.3.2'
+version '0.1.0'
 chef_version '>= 13.0'
 depends 'docker', '~> 4.9.2'
-
 
 # The `issues_url` points to the location where issues for this cookbook are
 # tracked.  A `View Issues` link will be displayed on this cookbook's page when
