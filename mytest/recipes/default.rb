@@ -12,10 +12,7 @@ file node['mytest']['file'] do
   content '{
   "insecure-registries" : ["http://10.186.106.151:5000"]
   }'
-end
-
-docker_service 'default' do
-  action [:restart]
+  notifies :restart, 'docker_service[default]', :immediately
 end
 
 docker_container 'test-reg' do
