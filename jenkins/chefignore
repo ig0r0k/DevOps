@@ -54,7 +54,6 @@ features/*
 examples/*
 Guardfile
 Procfile
-.kitchen*
 kitchen.yml*
 .rubocop.yml
 spec/*
@@ -62,7 +61,6 @@ Rakefile
 .travis.yml
 .foodcritic
 .codeclimate.yml
-
 # SCM #
 #######
 .git
