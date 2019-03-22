@@ -8,11 +8,11 @@ package "apache2" do
   action :install
 end
 
-user "apache" do
+user node['apache']['username'] do
   comment "Apache user"
   group "root"
   home "/home/apache"
-  shell "/bin/bash/"
+  shell node['apache']['shell']
   password "apache"
   action :create
 end
@@ -23,11 +23,8 @@ service "apache2" do
 end
 
 template "modjk" do
-  path "/home/vagrant/modjk.sh"
+  path node['apache']['path_to_mod']
   source "modjk.sh.erb"
-  owner "root"
-  group "root"
-  mode 777
 end
 
 execute "install modjk" do
@@ -35,19 +32,13 @@ execute "install modjk" do
 end
 
 template "workers" do
-  path "/etc/httpd/conf/workers.properties"
-  source "workers.properties.erb"
-  owner "root"
-  group "root"
-  mode 777  
+  path node['apache']['path_to_workers']
+  source "workers.properties.erb"  
 end
 
 template "config" do
-  path "/etc/httpd/conf/httpd.conf"
+  path node['apache']['path_to_conf']
   source "httpd.conf.erb"
-  owner "root"
-  group "root"
-  mode 777
 end
 
 execute "start apache from user" do

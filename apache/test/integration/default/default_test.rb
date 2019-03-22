@@ -25,4 +25,5 @@ end
 
 describe bash('ps aux') do
   its('stdout') { should match (/apache/) }
+  its('stdout') { should match (/httpd/) }
 end
