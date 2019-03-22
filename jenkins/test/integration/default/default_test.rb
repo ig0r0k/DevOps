@@ -14,6 +14,7 @@ end
 describe docker_container(name: 'jenkins') do
   it { should exist }
   it { should be_running }
+  its('ports') { should match /8000/ }
 end
 
 describe directory('/etc/jenkins_home') do
