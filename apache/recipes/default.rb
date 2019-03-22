@@ -18,8 +18,8 @@ user node['apache']['username'] do
 end
 
 service "apache2" do
-    service_name "httpd"
-	action :enable
+  service_name "httpd"
+  action :enable
 end
 
 template "modjk" do
