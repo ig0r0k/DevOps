@@ -18,8 +18,8 @@ user node['apache']['username'] do
 end
 
 service "apache2" do
-    service_name "httpd"
-	action :enable
+  service_name "httpd"
+  action :enable
 end
 
 bash 'install modjk' do
@@ -31,9 +31,9 @@ bash 'install modjk' do
 	cd tomcat-connectors*/native
 	./configure --with-apxs=/usr/bin/apxs
 	make
-	make install
-	EOH
-	not_if { ::File.exist?('/etc/httpd/modules/mod_jk.so') }
+	make install 
+EOH
+    not_if { ::File.exist?('/etc/httpd/modules/mod_jk.so') }
 end
 
 template "workers" do
@@ -47,6 +47,6 @@ template "config" do
 end
 
 service "apache2" do
-    service_name "httpd"
-	action :start
+  service_name "httpd"
+  action :start
 end
