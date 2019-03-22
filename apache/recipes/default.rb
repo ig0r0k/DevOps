@@ -32,7 +32,7 @@ bash 'install modjk' do
 	./configure --with-apxs=/usr/bin/apxs
 	make
 	make install 
-EOH
+    EOH
     not_if { ::File.exist?('/etc/httpd/modules/mod_jk.so') }
 end
 
