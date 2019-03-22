@@ -18,17 +18,22 @@ user node['apache']['username'] do
 end
 
 service "apache2" do
-  service_name "httpd"
-  action :enable
+    service_name "httpd"
+	action :enable
 end
 
-template "modjk" do
-  path node['apache']['path_to_mod']
-  source "modjk.sh.erb"
-end
-
-execute "install modjk" do
-  command "sh /home/vagrant/modjk.sh"
+bash 'install modjk' do
+  code <<-EOH
+    yum install gcc httpd-devel -y
+	cd /tmp
+	curl -LO http://mirrors.ibiblio.org/apache/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.46-src.tar.gz
+	tar xzvf tomcat-connectors*
+	cd tomcat-connectors*/native
+	./configure --with-apxs=/usr/bin/apxs
+	make
+	make install
+	EOH
+	not_if { ::File.exist?('/etc/httpd/modules/mod_jk.so') }
 end
 
 template "workers" do
@@ -41,6 +46,7 @@ template "config" do
   source "httpd.conf.erb"
 end
 
-execute "start apache from user" do
-  command "systemctl start httpd"
+service "apache2" do
+    service_name "httpd"
+	action :start
 end
