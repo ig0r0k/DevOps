@@ -1,6 +1,6 @@
-default['task10']['image'] = 'nginx'
+default['task10']['image'] = '10.186.106.155:5000/task7'
 default['task10']['tag'] = 'latest'
-default['task10']['repo'] = 'nginx'
+default['task10']['repo'] = '10.186.106.155:5000/task7'
 default['task10']['port'] = '8080:80'
 default['task10']['port_green'] = '8081:80'
 default['task10']['file'] = '/etc/docker/daemon.json'
