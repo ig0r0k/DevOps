@@ -4,61 +4,60 @@
 #
 # Copyright:: 2019, The Authors, All Rights Reserved.
 
+######create docker service######
 docker_service 'default' do
   action [:create, :start]
 end
 
-docker_image node['mytest']['image'] do
-  tag node['mytest']['tag']
-  action :pull
-end
-
-############ insecure
-file node['mytest']['file'] do
+######create daemon.json#######
+file node['task10']['file'] do
   action [:create]
-  content node['mytest']['content']
+  content node['task10']['content']
   notifies :restart, 'docker_service[default]', :immediately
 end
 
+######pull image######
+docker_image node['task10']['image'] do
+  tag node['task10']['tag']
+  action :pull
+end
+
+######remove blue######
 execute 'blue' do
   command 'docker stop task10_blue && docker rm task10_blue'
   action [:nothing]
 end
 
-execute 'green' do
-  command 'docker stop task10_green && docker rm task10_green'
-  action [:nothing]
-end
-
-########### green
-check = docker_container 'task10_green' do
-  repo node['mytest']['repo']
-  tag node['mytest']['tag']
-  port node['mytest']['port_green']
+######green########
+check_green = docker_container 'task10_green' do
+  repo node['task10']['repo']
+  tag node['task10']['tag']
+  port node['task10']['port_green']
   notifies :run, 'execute[blue]', :immediately
   only_if 'docker ps | grep 8080'
 end
 
-########### blue
-check2 = docker_container 'task10_blue' do
-  repo node['mytest']['repo']
-  tag node['mytest']['tag']
-  port node['mytest']['port']
+#####blue#####
+check_blue = docker_container 'task10_blue' do
+  repo node['task10']['repo']
+  tag node['task10']['tag']
+  port node['task10']['port']
   #notifies :run, 'execute[green]', :immediately
   only_if 'docker ps | grep 8081'
-  not_if { check.updated_by_last_action? }
+  not_if { check_green.updated_by_last_action? }
 end
 
+#####remove green#####
 execute 'green' do
   command 'docker stop task10_green && docker rm task10_green'
-  only_if { check2.updated_by_last_action? }
+  only_if { check_blue.updated_by_last_action? }
 end
 
-################## blue
+#####first time blue#######
 docker_container 'task10_blue' do
-  repo node['mytest']['repo']
-  tag node['mytest']['tag']
-  port node['mytest']['port']
+  repo node['task10']['repo']
+  tag node['task10']['tag']
+  port node['task10']['port']
   not_if 'docker ps | grep 8080'
   not_if 'docker ps | grep 8081'
 end
