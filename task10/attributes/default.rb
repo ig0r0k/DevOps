@@ -1,0 +1,7 @@
+default['mytest']['image'] = '10.186.106.155:5000/task7'
+default['mytest']['tag'] = 'latest'
+default['mytest']['repo'] = '10.186.106.155:5000/task7'
+default['mytest']['port'] = '8080:80'
+default['mytest']['port_green'] = '8081:80'
+default['mytest']['file'] = '/etc/docker/daemon.json'
+default['mytest']['content'] = '{ "insecure-registries" : ["http://10.186.106.155:5000"] }'
