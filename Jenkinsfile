@@ -15,11 +15,11 @@ node('master') {
             println x
             
             String minor=x.substring(x.lastIndexOf('.')+1)
-	          int m=minor.toInteger()+1
-	          String major=x.substring(0,x.lastIndexOf("."))
-	          String new_vers="version '"+major+ "." +m+"'"
-	          println new_vers
-	          sh label: '', script: """sed -i "7s/.*.*/$new_vers/" metadata.rb"""
+	    int m=minor.toInteger()+1
+	    String major=x.substring(0,x.lastIndexOf("."))
+	    String new_vers="version '"+major+ "." +m+"'"
+	    println new_vers
+	    sh label: '', script: """sed -i "7s/.*.*/$new_vers/" metadata.rb"""
         }
     }
     
@@ -32,7 +32,7 @@ node('master') {
         }
     }
 	
-	 stage('Rewrite ENV variables'){
+	stage('Rewrite ENV variables'){
         def envFile = sh returnStdout:true, script: "knife environment show $ENV -F json"
         envProperties = readJSON text: envFile;
         
