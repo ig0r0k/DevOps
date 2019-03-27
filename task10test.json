@@ -1,0 +1,16 @@
+{
+	"name":"test",
+	"description":"Test environment",
+	"cookbook_versions": {
+	
+	},
+	"json_class":"Chef::Environment",
+	"chef_type":"environment",
+	"default_attributes": {
+		"task10":{"tag":"1.0.76"
+		}
+	},
+	"override_attributes": {
+	
+	}
+}
