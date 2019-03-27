@@ -4,7 +4,7 @@ maintainer_email 'you@example.com'
 license 'All Rights Reserved'
 description 'Installs/Configures task10'
 long_description 'Installs/Configures task10'
-version '0.1.1'
+version '0.1.2'
 chef_version '>= 13.0'
 depends 'docker', '~> 4.9.2'
 
