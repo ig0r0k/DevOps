@@ -1,5 +1,5 @@
 default['task10']['image'] = '10.186.106.155:5000/task7'
-default['task10']['tag'] = 'latest'
+default['task10']['tag'] = '1.0.76'
 default['task10']['repo'] = '10.186.106.155:5000/task7'
 default['task10']['port'] = '8080:8080'
 default['task10']['port_green'] = '8081:8080'
