@@ -14,7 +14,7 @@ node('master') {
             x = x.replaceAll(/'/, "")
             println x
             
-            String minor=x.substring(x.lastIndexOf('.')+1)
+	    String minor=x.substring(x.lastIndexOf('.')+1)
 	    int m=minor.toInteger()+1
 	    String major=x.substring(0,x.lastIndexOf("."))
 	    String new_vers="version '"+major+ "." +m+"'"
@@ -56,6 +56,57 @@ node('master') {
         }
     }
     
+}
+
+node('tomcat2') {
+
+    stage('Check container'){
+    
+        def check = sh returnStdout:true, script: "sudo docker ps"
+        println check
+        
+        if (check.contains("0.0.0.0:8080")) {
+            println "ALL OK"
+            def curl = sh returnStdout:true, script: "curl localhost:8080/test/"
+            println curl
+            
+            if (curl.contains(image_version)){
+                println "VERSION IS CORRECT"
+            }
+            
+            else {
+                println "VERSION IS INCORRECT"
+                currentBuild.result = "ABORTED"
+                error("INCORRECT DEPLOY")
+            }
+        }
+        
+        else if (check.contains("0.0.0.0:8081")) {
+            println "ALL OK"
+            def curl = sh returnStdout:true, script: "curl localhost:8081/test/"
+            println curl
+            
+            if (curl.contains(image_version)){
+                println "VERSION IS CORRECT"
+            }
+            
+            else {
+                println "VERSION IS INCORRECT"
+                currentBuild.result = "ABORTED"
+                error("INCORRECT DEPLOY")
+            }
+        }
+        
+        else {
+            println "I DO NOT SEE OUR PORTS"
+            currentBuild.result = "ABORTED"
+            error("INCORRECT DEPLOY")
+        }
+        
+    }
+}
+
+node('master'){ 
     stage('Push to git'){
         sh label: '', script: '''
         git config user.name "ig0r0k"
