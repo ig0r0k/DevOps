@@ -33,15 +33,15 @@ end
 
 #####check_content_green#####
 ruby_block "check_green" do
-        block do
-            require 'chef/mixin/shell_out'
-            Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
-            sleep(20)
-            command = 'curl http://localhost:8081/test/'
-            command_out = shell_out(command)
-            raise "INCORRECT DEPLOY" if !command_out.stdout.include? node['task10']['tag']
-        end
-	only_if { check_green.updated_by_last_action? }
+  block do
+     require 'chef/mixin/shell_out'
+     Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
+     sleep(20)
+     command = 'curl http://localhost:8081/test/'
+     command_out = shell_out(command)
+     raise "INCORRECT DEPLOY" if !command_out.stdout.include? node['task10']['tag']
+  end
+  only_if { check_green.updated_by_last_action? }
 end
 
 ######remove blue######
@@ -61,15 +61,15 @@ end
 
 #####check_content_blue#####
 ruby_block "check_blue" do
-        block do
-            require 'chef/mixin/shell_out'
-            Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
-            sleep(20)
-            command = 'curl http://localhost:8080/test/'
-            command_out = shell_out(command)
-            raise "INCORRECT DEPLOY" if !command_out.stdout.include? node['task10']['tag']
-        end
-	only_if { check_blue.updated_by_last_action? }
+  block do
+     require 'chef/mixin/shell_out'
+     Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
+     sleep(20)
+     command = 'curl http://localhost:8080/test/'
+     command_out = shell_out(command)
+     raise "INCORRECT DEPLOY" if !command_out.stdout.include? node['task10']['tag']
+  end
+  only_if { check_blue.updated_by_last_action? }
 end
 
 #####remove green#####
