@@ -9,6 +9,10 @@ describe file('/etc/docker/daemon.json') do
   its('content') { should match(/10.186.106.155:5000/) }
 end
 
+describe port.where { port >= 8080 && port <= 8081 } do
+  it { should be_listening }
+end
+
 describe bash('docker ps') do
   its('stdout') { should match (/task10/) }
   its('stdout') { should match (/10.186.106.155:5000/) }
