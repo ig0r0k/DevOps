@@ -2,6 +2,8 @@
 
 provider "aws" {
   region = "us-east-2"
+  access_key = ""
+  secret_key = ""
 }
 
 data "aws_ami" "ubuntu" {
@@ -25,8 +27,7 @@ resource "aws_launch_configuration" "as_conf" {
   image_id      = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.micro"
   key_name	= "task11"
-  #vpc_classic_link_id = "${aws_vpc.main.id}"
-  #vpc_classic_link_security_groups = ["${aws_security_group.allow_tls.id}"]
+  security_groups = ["${aws_security_group.instance.id}", "${aws_security_group.allow_http.id}"]
 }
 
 resource "aws_autoscaling_group" "bar" {
@@ -38,44 +39,16 @@ resource "aws_autoscaling_group" "bar" {
   force_delete              = true
   min_size             = 1
   max_size             = 2
-  #vpc_zone_identifier  = ["${aws_subnet.main.*.id}", "${aws_subnet.second.*.id}"]
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_lb_target_group" "test" {
-  name     = "target11"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = "${aws_vpc.main.id}"
-}
-
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
-}
-
-resource "aws_subnet" "main" {
-  vpc_id     = "${aws_vpc.main.id}"
-  cidr_block = "10.0.10.0/24"
-  availability_zone = "us-east-2c"
-}
-
-resource "aws_subnet" "second" {
-  vpc_id     = "${aws_vpc.main.id}"
-  cidr_block = "10.0.20.0/24"
-  availability_zone = "us-east-2b"
-}
-
-resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.main.id}"
-}
 
 resource "aws_security_group" "allow_http" {
   name        = "allow_http"
   description = "Allow HTTP inbound traffic"
-  vpc_id      = "${aws_vpc.main.id}"
 
   ingress {
     from_port   = 80
@@ -92,12 +65,53 @@ resource "aws_security_group" "allow_http" {
   }
 }
 
+resource "aws_security_group" "instance" {
+  name = "allow_SSH"
+
+  ingress {
+    from_port   = "22"
+    to_port     = "22"
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = "0"
+    to_port     = "0"
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
 resource "aws_lb" "test" {
-  name               = "lb11"
+  name               = "task11LB"
   internal           = false
   load_balancer_type = "application"
-  enable_deletion_protection = false
-  subnets            = ["${aws_subnet.main.*.id}", "${aws_subnet.second.*.id}"]
   security_groups    = ["${aws_security_group.allow_http.id}"]
+  subnets            = ["subnet-38d3a742", "subnet-3eb88656"]
+
+  enable_deletion_protection = false
+}
+
+resource "aws_lb_target_group" "test" {
+  name     = "task11TARGET"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = "vpc-25c5d34d"
+  target_type = "instance"
+}
+
+resource "aws_lb_listener" "task11-Listener" {
+  load_balancer_arn = "${aws_lb.test.arn}"
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.test.arn}"
+    type             = "forward"
+  }
 }
