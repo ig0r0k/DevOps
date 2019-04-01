@@ -1,7 +1,20 @@
-ifcfg-ens33 - VM1 NAT interface
-ifcfg-ens34 - VM1 local interface
-iptables - VM1 firewall settings
-ifcfg-ens33-VM2 - local interface for VM2
-ifcfg-ens36-VM2 - another local interface for VM2
-ifcfg-ens33-VM3 - local interface for VM3
-ifcfg-ens36-VM3 - another local interface for VM3
+MusicStore (test application)
+=============================
+
+AppVeyor: [![AppVeyor][appveyor-badge]][appveyor-build]
+
+Travis:   [![Travis][travis-badge]][travis-build]
+
+[appveyor-badge]: https://ci.appveyor.com/api/projects/status/ja8a7j6jscj7k3xa/branch/dev?svg=true
+[appveyor-build]: https://ci.appveyor.com/project/aspnetci/MusicStore/branch/dev
+[travis-badge]: https://travis-ci.org/aspnet/MusicStore.svg?branch=dev
+[travis-build]: https://travis-ci.org/aspnet/MusicStore
+
+This project is part of ASP.NET Core. You can find samples, documentation and getting started instructions for ASP.NET Core at the [Home](https://github.com/aspnet/home) repo.
+
+## About this repo
+
+This repository is a test application used for ASP.NET Core internal test processes.
+It is not intended to be a representative sample of how to use ASP.NET Core.
+
+Samples and docs for ASP.NET Core can be found here: <https://docs.asp.net>.
